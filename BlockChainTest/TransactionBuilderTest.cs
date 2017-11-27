@@ -35,17 +35,17 @@ namespace BlockChainTest
 
             var chimaTestDestinationAddress = new BitcoinPubKeyAddress("mxgN2AiqHjKfGvo6Y57fAe4Y754rPdKf4P");
 
-            //Using Transaction Builder
-            Transaction ugoFunding = new Transaction()
+            var ugoCoins = new HashSet<ICoin>();
+            foreach(var operation in balance.Operations)
             {
-                Outputs = { new TxOut("0.38", bitcoinPrivateKey.GetAddress()) }
-
-
-            };
-            Coin[] ugoCoins = ugoFunding
-                               .Outputs
-                               .Select((o, i) => new Coin(new OutPoint(ugoFunding.GetHash(), i), o))
-                               .ToArray();
+                foreach(var coin in operation.ReceivedCoins)
+                {
+                    if(coin.TxOut.ScriptPubKey.GetDestinationAddress(network) == address)
+                    {
+                        ugoCoins.Add(coin);
+                    }
+                }
+            }
 
             var txBuilder = new TransactionBuilder();
             var trans = txBuilder
@@ -56,6 +56,7 @@ namespace BlockChainTest
                 .SetChange(bitcoinPrivateKey.GetAddress())
                 .BuildTransaction(true);
             bool isSigned = txBuilder.Verify(trans);
+            
             SmartBitClient smartBitClient = new SmartBitClient(network);
             PushTransaction(trans);
 
